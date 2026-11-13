@@ -1,0 +1,100 @@
+
+/* LOVE BOMBING V1 MOTION SYSTEM */
+
+.scene {
+  will-change: opacity, transform;
+}
+
+.transition-fade {
+  animation: sceneFade 0.5s ease both;
+}
+
+.transition-dissolve {
+  animation: sceneDissolve 0.7s ease both;
+}
+
+.transition-blur {
+  animation: softBlur 0.6s ease both;
+}
+
+.transition-scale {
+  animation: subtleScale 0.65s cubic-bezier(.2,.7,.3,1) both;
+}
+
+.transition-mask {
+  animation: maskReveal 0.7s ease both;
+}
+
+.camera-push {
+  animation: cameraPush 8s ease-in-out both;
+}
+
+.camera-pull {
+  animation: cameraPull 8s ease-in-out both;
+}
+
+.float-subtle {
+  animation: subtleFloat 5s ease-in-out infinite;
+}
+
+@keyframes sceneFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sceneDissolve {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes softBlur {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes subtleScale {
+  from {
+    opacity: 0;
+    transform: scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes maskReveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes cameraPush {
+  from { transform: scale(1); }
+  to { transform: scale(1.035); }
+}
+
+@keyframes cameraPull {
+  from { transform: scale(1.035); }
+  to { transform: scale(1); }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
