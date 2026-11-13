@@ -1,0 +1,13 @@
+
+{
+  "name": "love-bombing-v1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Faceless cinematic psychology video production",
+  "scripts": {
+    "render": "node renderer/render.js"
+  },
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}
