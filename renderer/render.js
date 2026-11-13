@@ -1,80 +1,84 @@
+import { chromium } from "playwright";
+import { PROJECT } from "../config/scenes.js";
+import { mkdir } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import path from "node:path";
 
-import { PROJECT, SCENES } from "../config/scenes.js";
-import { SUBTITLES } from "../config/subtitles.js";
-import { renderScene } from "./scenes.js";
+const ROOT = process.cwd();
+const OUTPUT = path.join(ROOT, "output");
+const FRAMES = path.join(OUTPUT, "frames");
 
-const stage = document.getElementById("stage");
-const sceneLayer = document.getElementById("scene-layer");
-const subtitleElement = document.getElementById("subtitle");
+const WIDTH = PROJECT.width;
+const HEIGHT = PROJECT.height;
+const FPS = PROJECT.fps;
+const DURATION = PROJECT.duration;
 
-function createScenes() {
-  sceneLayer.innerHTML = "";
+await mkdir(FRAMES, { recursive: true });
+await mkdir(OUTPUT, { recursive: true });
 
-  for (const scene of SCENES) {
-    const element = document.createElement("section");
-    element.className = "scene";
-    element.dataset.scene = scene.id;
-    element.innerHTML = renderScene(scene.id);
-    sceneLayer.appendChild(element);
+const browser = await chromium.launch({
+  headless: true,
+  args: ["--no-sandbox"]
+});
+
+const page = await browser.newPage({
+  viewport: { width: WIDTH, height: HEIGHT },
+  deviceScaleFactor: 1
+});
+
+await page.goto("file://" + path.join(ROOT, "index.html"));
+await page.waitForTimeout(1000);
+
+const totalFrames = Math.ceil(DURATION * FPS);
+
+for (let i = 0; i < totalFrames; i++) {
+  const time = i / FPS;
+
+  await page.evaluate((t) => {
+    window.LOVE_BOMBING.renderAt(t);
+  }, time);
+
+  await page.screenshot({
+    path: path.join(
+      FRAMES,
+      `frame-${String(i).padStart(5, "0")}.png`
+    ),
+    type: "png"
+  });
+
+  if (i % 150 === 0) {
+    console.log(`Rendering ${i}/${totalFrames}`);
   }
 }
 
-function renderSubtitle(time) {
-  const current = SUBTITLES.find(
-    item => time >= item.start && time < item.end
-  );
+await browser.close();
 
-  if (!current) {
-    subtitleElement.textContent = "";
-    return;
+const video = path.join(OUTPUT, "love-bombing-v1.mp4");
+const audio = path.join(
+  ROOT,
+  "assets/audio/ElevenLabs_2026-11-10T13_06_05_Dhea - Warm, Expressive and Clear_eleven_multilingual_v2.mp3"
+);
+
+const ffmpeg = spawn("ffmpeg", [
+  "-y",
+  "-framerate", String(FPS),
+  "-i", path.join(FRAMES, "frame-%05d.png"),
+  "-i", audio,
+  "-t", String(DURATION),
+  "-c:v", "libx264",
+  "-preset", "ultrafast",
+  "-crf", "23",
+  "-pix_fmt", "yuv420p",
+  "-c:a", "aac",
+  "-b:a", "192k",
+  video
+], { stdio: "inherit" });
+
+ffmpeg.on("close", (code) => {
+  if (code !== 0) {
+    console.error("FFmpeg gagal:", code);
+    process.exit(1);
   }
 
-  const words = current.text.split(" ");
-  const highlighted = new Set(
-    current.highlight.map(word => word.toLowerCase())
-  );
-
-  subtitleElement.innerHTML = words.map(word => {
-    const clean = word.replace(/[.,!?]/g, "").toLowerCase();
-    const escaped = word.replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[char]);
-
-    return highlighted.has(clean)
-      ? `<span class="highlight">${escaped}</span>`
-      : escaped;
-  }).join(" ");
-}
-
-function renderFrame(time) {
-  const current = SCENES.find(
-    scene => time >= scene.start && time < scene.end
-  );
-
-  for (const element of sceneLayer.children) {
-    element.classList.toggle(
-      "active",
-      element.dataset.scene === current?.id
-    );
-  }
-
-  stage.dataset.currentScene = current?.id || "ending";
-  renderSubtitle(time);
-}
-
-function renderAt(time) {
-  renderFrame(time);
-}
-
-createScenes();
-
-window.LOVE_BOMBING = {
-  project: PROJECT,
-  scenes: SCENES,
-  subtitles: SUBTITLES,
-  renderAt
-};
+  console.log("VIDEO SELESAI:", video);
+});
