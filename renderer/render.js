@@ -27,8 +27,10 @@ const page = await browser.newPage({
 });
 
 await page.goto("file://" + path.join(ROOT, "index.html"));
-await page.waitForTimeout(1000);
 
+await page.waitForFunction(() => {
+  return typeof window.LOVE_BOMBING?.renderAt === "function";
+});
 const totalFrames = Math.ceil(DURATION * FPS);
 
 for (let i = 0; i < totalFrames; i++) {
