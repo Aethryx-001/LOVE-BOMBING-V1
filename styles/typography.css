@@ -1,0 +1,50 @@
+
+/* LOVE BOMBING V1 TYPOGRAPHY */
+
+:root {
+  --font-heading: "Montserrat", Arial, sans-serif;
+  --font-body: "Inter", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+.heading {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  color: var(--cream);
+}
+
+.body-text {
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--cream);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.scene-title {
+  font-size: 76px;
+  text-align: center;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 58px;
+  line-height: 1.3;
+  letter-spacing: -1px;
+  text-align: center;
+}
+
+.highlight {
+  color: var(--gold);
+  font-weight: 700;
+}
