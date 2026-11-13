@@ -1,27 +1,20 @@
 
 import { PROJECT, SCENES } from "../config/scenes.js";
 import { SUBTITLES } from "../config/subtitles.js";
+import { renderScene } from "./scenes.js";
 
 const stage = document.getElementById("stage");
 const sceneLayer = document.getElementById("scene-layer");
 const subtitleElement = document.getElementById("subtitle");
 
-const audio = new Audio(
-  "../assets/audio/ElevenLabs_2026-11-10T13_06_05_Dhea - Warm, Expressive and Clear_eleven_multilingual_v2.mp3"
-);
-
-audio.preload = "auto";
-
-function createSceneElements() {
+function createScenes() {
   sceneLayer.innerHTML = "";
 
   for (const scene of SCENES) {
     const element = document.createElement("section");
-
     element.className = "scene";
     element.dataset.scene = scene.id;
-    element.style.background = "#101010";
-
+    element.innerHTML = renderScene(scene.id);
     sceneLayer.appendChild(element);
   }
 }
@@ -32,28 +25,32 @@ function renderSubtitle(time) {
   );
 
   if (!current) {
-    subtitleElement.innerHTML = "";
+    subtitleElement.textContent = "";
     return;
   }
 
-  let text = current.text;
+  const words = current.text.split(" ");
+  const highlighted = new Set(
+    current.highlight.map(word => word.toLowerCase())
+  );
 
-  for (const word of current.highlight) {
-    const escaped = word.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      "\\$&"
-    );
+  subtitleElement.innerHTML = words.map(word => {
+    const clean = word.replace(/[.,!?]/g, "").toLowerCase();
+    const escaped = word.replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
 
-    text = text.replace(
-      new RegExp(escaped, "i"),
-      match => `<span class="highlight">${match}</span>`
-    );
-  }
-
-  subtitleElement.innerHTML = text;
+    return highlighted.has(clean)
+      ? `<span class="highlight">${escaped}</span>`
+      : escaped;
+  }).join(" ");
 }
 
-function renderScene(time) {
+function renderFrame(time) {
   const current = SCENES.find(
     scene => time >= scene.start && time < scene.end
   );
@@ -65,47 +62,19 @@ function renderScene(time) {
     );
   }
 
-  if (current) {
-    stage.dataset.currentScene = current.id;
-  }
-}
-
-function updateFrame() {
-  const time = audio.currentTime;
-
-  renderScene(time);
+  stage.dataset.currentScene = current?.id || "ending";
   renderSubtitle(time);
-
-  if (!audio.paused && !audio.ended) {
-    requestAnimationFrame(updateFrame);
-  }
 }
 
-function startPreview() {
-  audio.currentTime = 0;
-  audio.play();
-  updateFrame();
+function renderAt(time) {
+  renderFrame(time);
 }
 
-createSceneElements();
+createScenes();
 
 window.LOVE_BOMBING = {
   project: PROJECT,
   scenes: SCENES,
   subtitles: SUBTITLES,
-  audio,
-  startPreview
+  renderAt
 };
-
-window.addEventListener("keydown", event => {
-  if (event.code === "Space") {
-    event.preventDefault();
-
-    if (audio.paused) {
-      startPreview();
-    } else {
-      audio.pause();
-    }
-  }
-});
-      
